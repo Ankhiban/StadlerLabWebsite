@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Submit</title>
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <!-- Add EmailJS script -->
+  <script type="module">
+    import emailjs from 'https://cdn.emailjs.com/dist/email.min.js';
+    emailjs.init('OiZ2o44a45JPpY84A');  // Initialize with your EmailJS User ID
+
+    document.addEventListener("DOMContentLoaded", function () {
+      document.getElementById("submitForm").addEventListener("submit", function(event) {
+        event.preventDefault();  // Prevent page refresh
+
+        // Send the form data through EmailJS
+        emailjs.sendForm('service_gy89pbz', 'template_paiv8f2', this)
+          .then((result) => {
+            console.log('Email sent successfully:', result.text);
+            alert('Your submission has been sent successfully!');
+          }, (error) => {
+            console.error('Failed to send email:', error.text);
+            alert('Oops! Something went wrong. Please try again.');
+          });
+      });
+    });
+  </script>
+</head>
+<body>
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="home.html">Home</a></li>
+      <li><a href="about.html">About</a></li>
+      <li><a href="guide.html">Guide</a></li>
+      <li><a href="submit.html">Submit</a></li>
+      <li><a href="targets.html">Targets</a></li>
+    </ul>
+  </nav>
+
+  <div class="maintext">
+    <h1>Submit</h1>
+    <p>Submission Instructions</p>
+  </div>
+
+  <!-- Updated form -->
+  <form id="submitForm" class="form">
+    <label for="username">Name*</label><br>
+    <input type="text" id="username" name="username" required><br>
+
+    <label for="email">Email*</label><br>
+    <input type="email" id="email" name="email" required><br>
+
+    <label for="disease">Disease*</label><br>
+    <input type="text" id="disease" name="disease" required><br>
+
+    <label for="fprimer">Forward Primer</label><br>
+    <input type="text" id="fprimer" name="fprimer"><br>
+
+    <label for="rprimer">Reverse Primer</label><br>
+    <input type="text" id="rprimer" name="rprimer"><br>
+
+    <label for="probe">Probe</label><br>
+    <input type="text" id="probe" name="probe"><br>
+
+    <button type="submit">Submit</button>
+  </form>
+
+</body>
+</html>

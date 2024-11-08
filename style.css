@@ -1,0 +1,86 @@
+
+.navbar ul{
+    list-style-type: none;
+    background-color:black;
+    padding: 0px;
+    margin: 0px;
+    overflow:hidden;
+}
+
+.navbar a{
+    color: beige;
+    text-decoration: none;
+    padding: 15px;
+    display: block;
+    text-align: center;
+}
+
+.navbar a:hover{
+    background-color: brown;
+}
+.navbar li{
+    float:left;
+}
+
+.maintext{
+    text-align: center;
+}
+
+.accordion {
+    background-color: #eee;
+    color: #444;
+    cursor: pointer;
+    padding: 18px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    transition: 0.4s;
+  }
+
+  .active, .accordion:hover {
+    background-color: #ccc;
+  }
+
+  .panel {
+    padding: 0 18px;
+    background-color: white;
+    display: none;
+    overflow: hidden;
+  }
+
+  .form {
+    background-color:#ccc;
+    margin: 10px;
+    text-align: center;
+    padding-top: 5px;
+    padding-bottom: 10px;
+  }
+
+.form label{
+    margin: 10px;
+}
+
+.form input{
+    margin: 10px;
+
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  text-align: left;
+  padding: 8px;
+}
+
+tr:nth-child(even) {
+  background-color: #D6EEEE;
+}
+
+
+
+
+
