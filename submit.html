@@ -163,7 +163,7 @@
     <script>
         (function() {
             // Replace with your Google Apps Script URL
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzX--0KZG-E1BXWFZlBjZBGACDl4gOJmBfQz5KZio_KxPPEWzmcEMW60w0uBbA8RL3aNw/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7GrZwFGjVc8GgyzV87es3pzR0x8yvzPnk-GQc3Vckh7jKyfCtZnbiOKa9qkIo_1Ou7Q/exec';
 
             const form = document.getElementById('submitForm');
             const loadingDiv = document.getElementById('loading');
@@ -199,7 +199,7 @@
 
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        mode: 'cors',
+                        mode: 'no-cors',
                         cache: 'no-cache',
                         headers: {
                             'Content-Type': 'application/json',
