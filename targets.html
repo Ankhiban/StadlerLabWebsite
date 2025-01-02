@@ -1,45 +1,31 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>targets</title>
-<link rel="stylesheet" type="text/css" href="style.css">
+    <title>targets</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
 </head>
 <body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="guide.html">Guide</a></li>
+            <li><a href="submit.html">Submit</a></li>
+            <li><a href="targets.html">Targets</a></li>
+        </ul>
+    </nav>
 
-  <nav class="navbar">
-    <ul>
-        <li><a href="index.html">Home</a></li>
-        <li><a href="about.html">About</a></li>
-        <li><a href="guide.html">Guide</a></li>
-        <li><a href="submit.html">Submit</a></li>
-        <li><a href="targets.html">Targets</a></li>
-    </ul>
-</nav>
+    <div class="maintext">
+        <h1>Targets</h1>
+    </div>
 
-<div class="maintext">
-  <h1>Targets</h1>
-</div>
+    <table id="targets-table">
+        <!-- Dynamic content will be inserted here -->
+    </table>
 
-
-<table>
-  <tr>
-    <th><a href="influenza.html">Influenza</a></th>
-    <th>2</th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Measles</a></th>
-    <th>2 </th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Norovirus</a></th>
-    <th>3 </th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Adenovirus</a></th>
-    <th>1</th>
-  </tr>
-</table>
-
-
+    <script src="js/targets.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTargets);
+    </script>
 </body>
 </html>

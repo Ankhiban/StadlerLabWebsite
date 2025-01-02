@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Target Details</title>
+    <link rel="stylesheet" type="text/css" href="style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="about.html">About</a></li>
+            <li><a href="guide.html">Guide</a></li>
+            <li><a href="submit.html">Submit</a></li>
+            <li><a href="targets.html">Targets</a></li>
+        </ul>
+    </nav>
+
+    <div class="maintext">
+        <h1><!-- Target name will be inserted here --></h1>
+    </div>
+
+    <div id="assays-container">
+        <!-- Dynamic content will be inserted here -->
+    </div>
+
+    <script src="script.js"></script>
+    <script src="js/target-details.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', loadTargetDetails);
+    </script>
+</body>
+</html>
