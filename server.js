@@ -29,25 +29,10 @@ app.get('/api/targets', async (req, res) => {
 app.get('/api/targets/:name', async (req, res) => {
     try {
         const targetName = req.params.name;
-        const TargetModel = mongoose.model(targetName, primerSchema, targetName);
+        // Check if model already exists to prevent OverwriteModelError
+        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema);
         const primers = await TargetModel.find({});
-        
-        // Calculate lengths for each primer if they're missing
-        const primersWithLengths = primers.map(primer => {
-            const doc = primer.toObject();
-            if (!doc.forwardPrimerLength) {
-                doc.forwardPrimerLength = doc.forwardPrimer ? doc.forwardPrimer.length : 0;
-            }
-            if (!doc.reversePrimerLength) {
-                doc.reversePrimerLength = doc.reversePrimer ? doc.reversePrimer.length : 0;
-            }
-            if (!doc.probeLength) {
-                doc.probeLength = doc.probe ? doc.probe.length : 0;
-            }
-            return doc;
-        });
-        
-        res.json(primersWithLengths);
+        res.json(primers);
     } catch (err) {
         console.error('Error fetching primers:', err);
         res.status(500).json({ error: err.message });
@@ -58,17 +43,9 @@ app.get('/api/targets/:name', async (req, res) => {
 app.post('/api/targets/:name', async (req, res) => {
     try {
         const targetName = req.params.name;
-        const TargetModel = mongoose.model(targetName, primerSchema, targetName);
-        
-        // Calculate lengths before saving
-        const primerData = {
-            ...req.body,
-            forwardPrimerLength: req.body.forwardPrimer ? req.body.forwardPrimer.length : 0,
-            reversePrimerLength: req.body.reversePrimer ? req.body.reversePrimer.length : 0,
-            probeLength: req.body.probe ? req.body.probe.length : 0
-        };
-        
-        const primer = new TargetModel(primerData);
+        // Check if model already exists to prevent OverwriteModelError
+        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema);
+        const primer = new TargetModel(req.body);
         await primer.save();
         res.status(201).json(primer);
     } catch (err) {

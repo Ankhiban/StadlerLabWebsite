@@ -26,6 +26,27 @@
             outline: none;
         }
 
+        .filter-container {
+            margin: 15px 0;
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #methodFilter {
+            padding: 8px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
         .no-results-message {
             text-align: center;
             padding: 20px;
@@ -54,12 +75,94 @@
             font-size: 0.9em;
         }
 
-        .filter-container {
-            margin-top: 10px;
+        .method-badge {
+            display: inline-block;
+            background-color: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
         }
 
-        .filter-checkbox {
-            margin-left: 10px;
+        /* Accordion Styles */
+        .accordion {
+            background-color: #eee;
+            color: #444;
+            cursor: pointer;
+            padding: 18px;
+            width: 100%;
+            text-align: left;
+            border: none;
+            outline: none;
+            transition: 0.4s;
+            margin-top: 5px;
+        }
+
+        .active, .accordion:hover {
+            background-color: #ccc;
+        }
+
+        .panel {
+            padding: 0 18px;
+            background-color: white;
+            display: none;
+            overflow: hidden;
+        }
+
+        .panel p {
+            margin: 10px 0;
+        }
+
+        #assays-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            margin-right: 5px;
+            cursor: pointer;
+        }
+
+        /* Select dropdown styling */
+        select {
+            padding: 8px 12px;
+            border: 2px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        select:focus {
+            border-color: #666;
+            outline: none;
+        }
+
+        /* Label styling */
+        label {
+            font-size: 14px;
+            color: #444;
+        }
+
+        /* Responsive design */
+        @media screen and (max-width: 768px) {
+            .filter-container {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .filter-group {
+                width: 100%;
+                justify-content: center;
+            }
+
+            #assaySearch {
+                width: 100%;
+                max-width: 300px;
+            }
         }
     </style>
 </head>
@@ -81,10 +184,20 @@
     <div class="search-container">
         <input type="text" id="assaySearch" placeholder="Search assays...">
         <div class="filter-container">
-            <label>
-                <input type="checkbox" id="cdcFilter" class="filter-checkbox">
-                Show only CDC recommended assays
-            </label>
+            <div class="filter-group">
+                <label for="methodFilter">Detection Method:</label>
+                <select id="methodFilter">
+                    <option value="all">All Methods</option>
+                    <option value="qpcr">qPCR</option>
+                    <option value="ddpcr">ddPCR</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>
+                    <input type="checkbox" id="cdcFilter">
+                    CDC Recommended Only
+                </label>
+            </div>
         </div>
     </div>
 
@@ -102,8 +215,15 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const targetName = urlParams.get('name');
                 
+                console.log('Loading target:', targetName);
+                
                 const response = await fetch(`/api/targets/${encodeURIComponent(targetName)}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
                 const primers = await response.json();
+                
+                console.log('Received primers:', primers);
                 
                 // Update page title
                 document.querySelector('.maintext h1').textContent = targetName;
@@ -113,11 +233,23 @@
                 const container = document.querySelector('#assays-container');
                 container.innerHTML = '';
                 
+                if (primers.length === 0) {
+                    container.innerHTML = '<p class="no-results-message">No primers found for this target.</p>';
+                    return;
+                }
+                
                 primers.forEach((primer) => {
                     const button = document.createElement('button');
                     button.className = 'accordion';
+                    button.setAttribute('data-method', (primer.detectionMethod || '').toLowerCase());
+                    
+                    const name = primer.name || 'Unnamed Primer';
+                    const reference = primer.reference || 'No Reference';
+                    const type = primer.type || 'No Type';
+                    
                     button.innerHTML = `
-                        ${primer.name} - ${primer.reference} - ${primer.type}
+                        ${name} - ${reference}
+                        <span class="method-badge">${(primer.detectionMethod || 'Unknown').toUpperCase()}</span>
                         <span class="${primer.cdcRecommended ? 'cdc-recommended' : 'not-recommended'}">
                             ${primer.cdcRecommended ? 'CDC Recommended' : 'Not CDC Recommended'}
                         </span>
@@ -126,13 +258,16 @@
                     const panel = document.createElement('div');
                     panel.className = 'panel';
                     panel.innerHTML = `
-                        <p>Forward Primer: ${primer.forwardPrimer}</p>
-                        <p>Length: ${primer.forwardPrimerLength}</p>
-                        <p>Reverse Primer: ${primer.reversePrimer}</p>
-                        <p>Length: ${primer.reversePrimerLength}</p>
-                        <p>Probe: ${primer.probe}</p>
-                        <p>Length: ${primer.probeLength}</p>
-                        <p>Notes: ${primer.notes}</p>
+                        <div style="background-color: #f5f5f5; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
+                            <h3 style="margin: 0; color: #333;">Detection Method: ${(primer.detectionMethod || 'Not specified').toUpperCase()}</h3>
+                        </div>
+                        <p>Forward Primer: ${primer.forwardPrimer || 'Not provided'}</p>
+                        <p>Length: ${primer.forwardPrimerLength || 'N/A'}</p>
+                        <p>Reverse Primer: ${primer.reversePrimer || 'Not provided'}</p>
+                        <p>Length: ${primer.reversePrimerLength || 'N/A'}</p>
+                        <p>Probe: ${primer.probe || 'Not provided'}</p>
+                        <p>Length: ${primer.probeLength || 'N/A'}</p>
+                        <p>Notes: ${primer.notes || 'No notes provided'}</p>
                     `;
                     
                     container.appendChild(button);
@@ -144,6 +279,8 @@
                 
             } catch (err) {
                 console.error('Error loading target details:', err);
+                document.querySelector('#assays-container').innerHTML = 
+                    `<p class="no-results-message">Error loading primers: ${err.message}</p>`;
             }
         }
 
@@ -165,6 +302,7 @@
         function filterAssays() {
             const searchText = document.getElementById('assaySearch').value.toLowerCase();
             const cdcOnly = document.getElementById('cdcFilter').checked;
+            const methodFilter = document.getElementById('methodFilter').value;
             const accordions = document.getElementsByClassName('accordion');
             let visibleCount = 0;
 
@@ -173,11 +311,13 @@
                 const panel = accordion.nextElementSibling;
                 const content = accordion.textContent.toLowerCase() + panel.textContent.toLowerCase();
                 const isCdcRecommended = accordion.querySelector('.cdc-recommended') !== null;
+                const method = accordion.getAttribute('data-method');
 
                 const matchesSearch = content.includes(searchText);
                 const matchesCdc = !cdcOnly || isCdcRecommended;
+                const matchesMethod = methodFilter === 'all' || method === methodFilter;
 
-                if (matchesSearch && matchesCdc) {
+                if (matchesSearch && matchesCdc && matchesMethod) {
                     accordion.style.display = 'block';
                     visibleCount++;
                 } else {
@@ -194,6 +334,7 @@
         // Add event listeners
         document.getElementById('assaySearch').addEventListener('input', filterAssays);
         document.getElementById('cdcFilter').addEventListener('change', filterAssays);
+        document.getElementById('methodFilter').addEventListener('change', filterAssays);
 
         // Load target details when page loads
         document.addEventListener('DOMContentLoaded', loadTargetDetails);

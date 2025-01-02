@@ -4,6 +4,12 @@ const primerSchema = new mongoose.Schema({
     name: String,
     reference: String,
     type: String,
+    detectionMethod: {
+        type: String,
+        enum: ['qpcr', 'ddpcr'],
+        required: true,
+        lowercase: true
+    },
     forwardPrimer: String,
     forwardPrimerLength: {
         type: Number,
