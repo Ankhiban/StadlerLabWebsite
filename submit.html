@@ -163,12 +163,20 @@
     <script>
         (function() {
             // Replace with your Google Apps Script URL
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEZawaZKaCXT6MdDFXQSTaBNEnOZUc4akBBqqq9HhGvCDaResMyWHS1TnwNYcLdry8Lw/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyEEhwPBDNb7XTDRcwywfEF0T_HII7A5sjY1nqtZEPAaGebNDOejwGyUdNff1kw5NWhZA/exec';
 
             const form = document.getElementById('submitForm');
             const loadingDiv = document.getElementById('loading');
             const successAlert = document.getElementById('successAlert');
             const errorAlert = document.getElementById('errorAlert');
+
+            // Check URL parameters for success/error messages
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success')) {
+                showAlert('success');
+            } else if (urlParams.get('error')) {
+                showAlert('error');
+            }
 
             function showAlert(type, show = true) {
                 const alert = type === 'success' ? successAlert : errorAlert;
@@ -183,48 +191,40 @@
             form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 
-                const formData = {
-                    username: form.username.value,
-                    email: form.email.value,
-                    disease: form.disease.value,
-                    fprimer: form.fprimer.value,
-                    rprimer: form.rprimer.value,
-                    probe: form.probe.value
-                };
-
                 setLoading(true);
                 showAlert('success', false);
                 showAlert('error', false);
 
-                const encodedData = Object.keys(formData)
-                    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
-                    .join('&');
+                // Create a hidden iframe
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
 
-                const xhr = new XMLHttpRequest();
-                xhr.open('POST', SCRIPT_URL);
-                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-                
-                xhr.onload = function() {
-    setLoading(false);
-    try {
-        if (xhr.status === 200 && xhr.responseText === "success") {
-            showAlert('success');
-            form.reset();
-        } else {
-            showAlert('error');
-        }
-    } catch (e) {
-        showAlert('error');
-        console.error('Response parsing error:', e);
-    }
-};
-                
-                xhr.onerror = function() {
+                // Create a temporary form inside the iframe
+                const tempForm = document.createElement('form');
+                tempForm.method = 'POST';
+                tempForm.action = SCRIPT_URL;
+                tempForm.target = '_top';
+
+                // Add form fields
+                const fields = ['username', 'email', 'disease', 'fprimer', 'rprimer', 'probe'];
+                fields.forEach(field => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = field;
+                    input.value = form[field].value;
+                    tempForm.appendChild(input);
+                });
+
+                // Add the form to iframe and submit
+                iframe.contentDocument.body.appendChild(tempForm);
+                tempForm.submit();
+
+                // Show success message after short delay
+                setTimeout(() => {
                     setLoading(false);
-                    showAlert('error');
-                };
-
-                xhr.send(encodedData);
+                    document.body.removeChild(iframe);
+                }, 2000);
             });
         })();
     </script>
