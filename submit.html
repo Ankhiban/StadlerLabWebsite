@@ -83,34 +83,47 @@
             background-color: #45a049;
         }
 
-        .form button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
-
-        .loading {
-            display: none;
-            text-align: center;
+        .message {
             margin-top: 1rem;
-        }
-
-        .alert {
             padding: 1rem;
-            margin: 1rem 0;
             border-radius: 4px;
+            text-align: center;
             display: none;
         }
 
-        .alert-success {
+        .success {
             background-color: #d4edda;
             color: #155724;
             border: 1px solid #c3e6cb;
         }
 
-        .alert-error {
+        .error {
             background-color: #f8d7da;
             color: #721c24;
             border: 1px solid #f5c6cb;
+        }
+
+        #submitButton {
+            position: relative;
+        }
+
+        #submitButton.loading::after {
+            content: "";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            margin: -10px 0 0 -10px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -130,13 +143,9 @@
         <p>Submission Instructions</p>
     </div>
 
-    <form id="submitForm" class="form">
-        <div id="successAlert" class="alert alert-success">
-            Your submission has been sent successfully!
-        </div>
-        <div id="errorAlert" class="alert alert-error">
-            Oops! Something went wrong. Please try again.
-        </div>
+    <form id="submitForm" class="form" method="POST" target="hidden-iframe" 
+          action="https://script.google.com/macros/s/AKfycbxHF57RhF1cW3PjE_cHuwvZmOJJ_JGA6yTc65B2-n6CJzLsnZdHu2dKM2JCcuc9QNetMg/exec">
+        <div id="message" class="message"></div>
 
         <label for="username">Name*</label>
         <input type="text" id="username" name="username" required>
@@ -156,98 +165,31 @@
         <label for="probe">Probe</label>
         <input type="text" id="probe" name="probe">
 
-        <button type="submit">Submit</button>
-        <div id="loading" class="loading">Sending...</div>
+        <button type="submit" id="submitButton">Submit</button>
     </form>
 
+    <iframe id="hidden-iframe" name="hidden-iframe" style="display:none;"></iframe>
+
     <script>
-        (function() {
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzefzc3JCMwusFsI9EnOZ8sv1nDyKvd2yR3TZ5acQW-s1Dy3xL4FvRCAKVywVlLsxgF0Q/exec';
-
-            const form = document.getElementById('submitForm');
-            const loadingDiv = document.getElementById('loading');
-            const successAlert = document.getElementById('successAlert');
-            const errorAlert = document.getElementById('errorAlert');
-
-            // Check URL parameters for success/error messages
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('success')) {
-                showAlert('success');
-            } else if (urlParams.get('error')) {
-                showAlert('error');
-            }
-
-            function showAlert(type, show = true) {
-                const alert = type === 'success' ? successAlert : errorAlert;
-                alert.style.display = show ? 'block' : 'none';
-                
-                // Scroll to the alert
-                if (show) {
-                    alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            }
-
-            function setLoading(isLoading) {
-                loadingDiv.style.display = isLoading ? 'block' : 'none';
-                form.querySelector('button').disabled = isLoading;
-            }
-
-            form.addEventListener('submit', function(event) {
-                event.preventDefault();
-                
-                setLoading(true);
-                showAlert('success', false);
-                showAlert('error', false);
-
-                // Create form data
-                const formData = new FormData();
-                const fields = ['username', 'email', 'disease', 'fprimer', 'rprimer', 'probe'];
-                fields.forEach(field => {
-                    formData.append(field, form[field].value);
-                });
-
-                // Submit the form using a hidden iframe with a target
-                const timestamp = new Date().getTime();
-                const iframeId = `hidden-iframe-${timestamp}`;
-                
-                // Create hidden iframe
-                const iframe = document.createElement('iframe');
-                iframe.setAttribute('id', iframeId);
-                iframe.setAttribute('name', iframeId);
-                iframe.style.display = 'none';
-                document.body.appendChild(iframe);
-
-                // Create and submit the form
-                const tempForm = document.createElement('form');
-                tempForm.setAttribute('method', 'POST');
-                tempForm.setAttribute('action', SCRIPT_URL);
-                tempForm.setAttribute('target', iframeId);
-
-                fields.forEach(field => {
-                    const input = document.createElement('input');
-                    input.type = 'hidden';
-                    input.name = field;
-                    input.value = form[field].value;
-                    tempForm.appendChild(input);
-                });
-
-                document.body.appendChild(tempForm);
-                tempForm.submit();
-                document.body.removeChild(tempForm);
-
-                // Handle response
-                setTimeout(() => {
-                    setLoading(false);
-                    showAlert('success', true);
-                    form.reset();
-                    
-                    // Clean up iframe after a delay
-                    setTimeout(() => {
-                        document.body.removeChild(iframe);
-                    }, 5000);
-                }, 2000);
-            });
-        })();
+        document.getElementById('submitForm').addEventListener('submit', function(e) {
+            const button = document.getElementById('submitButton');
+            const messageDiv = document.getElementById('message');
+            
+            // Show loading state
+            button.disabled = true;
+            button.classList.add('loading');
+            messageDiv.style.display = 'none';
+            
+            // Reset form and show success message after delay
+            setTimeout(function() {
+                button.disabled = false;
+                button.classList.remove('loading');
+                messageDiv.className = 'message success';
+                messageDiv.textContent = 'Form submitted successfully!';
+                messageDiv.style.display = 'block';
+                document.getElementById('submitForm').reset();
+            }, 2000);
+        });
     </script>
 </body>
 </html>
