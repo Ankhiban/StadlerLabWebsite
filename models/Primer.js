@@ -8,7 +8,6 @@ const primerSchema = new mongoose.Schema({
     forwardPrimerLength: {
         type: Number,
         set: function(v) {
-            // Length will be automatically calculated from forwardPrimer
             return this.forwardPrimer ? this.forwardPrimer.length : 0;
         }
     },
@@ -16,7 +15,6 @@ const primerSchema = new mongoose.Schema({
     reversePrimerLength: {
         type: Number,
         set: function(v) {
-            // Length will be automatically calculated from reversePrimer
             return this.reversePrimer ? this.reversePrimer.length : 0;
         }
     },
@@ -24,9 +22,12 @@ const primerSchema = new mongoose.Schema({
     probeLength: {
         type: Number,
         set: function(v) {
-            // Length will be automatically calculated from probe
             return this.probe ? this.probe.length : 0;
         }
+    },
+    cdcRecommended: {
+        type: Boolean,
+        default: false
     },
     notes: String
 });

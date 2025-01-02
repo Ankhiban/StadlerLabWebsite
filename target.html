@@ -34,9 +34,32 @@
             display: none;
         }
 
-        /* Style for accordion buttons to make them more visible */
-        .accordion {
-            margin-top: 5px;
+        .cdc-recommended {
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .not-recommended {
+            display: inline-block;
+            background-color: #666;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 10px;
+            font-size: 0.9em;
+        }
+
+        .filter-container {
+            margin-top: 10px;
+        }
+
+        .filter-checkbox {
+            margin-left: 10px;
         }
     </style>
 </head>
@@ -57,6 +80,12 @@
 
     <div class="search-container">
         <input type="text" id="assaySearch" placeholder="Search assays...">
+        <div class="filter-container">
+            <label>
+                <input type="checkbox" id="cdcFilter" class="filter-checkbox">
+                Show only CDC recommended assays
+            </label>
+        </div>
     </div>
 
     <div id="no-results-message" class="no-results-message">
@@ -87,7 +116,12 @@
                 primers.forEach((primer) => {
                     const button = document.createElement('button');
                     button.className = 'accordion';
-                    button.textContent = `${primer.name} - ${primer.reference} - ${primer.type}`;
+                    button.innerHTML = `
+                        ${primer.name} - ${primer.reference} - ${primer.type}
+                        <span class="${primer.cdcRecommended ? 'cdc-recommended' : 'not-recommended'}">
+                            ${primer.cdcRecommended ? 'CDC Recommended' : 'Not CDC Recommended'}
+                        </span>
+                    `;
                     
                     const panel = document.createElement('div');
                     panel.className = 'panel';
@@ -130,6 +164,7 @@
 
         function filterAssays() {
             const searchText = document.getElementById('assaySearch').value.toLowerCase();
+            const cdcOnly = document.getElementById('cdcFilter').checked;
             const accordions = document.getElementsByClassName('accordion');
             let visibleCount = 0;
 
@@ -137,29 +172,28 @@
                 const accordion = accordions[i];
                 const panel = accordion.nextElementSibling;
                 const content = accordion.textContent.toLowerCase() + panel.textContent.toLowerCase();
+                const isCdcRecommended = accordion.querySelector('.cdc-recommended') !== null;
 
-                if (content.includes(searchText)) {
+                const matchesSearch = content.includes(searchText);
+                const matchesCdc = !cdcOnly || isCdcRecommended;
+
+                if (matchesSearch && matchesCdc) {
                     accordion.style.display = 'block';
                     visibleCount++;
                 } else {
                     accordion.style.display = 'none';
-                    // If panel was open, close it
                     panel.style.display = 'none';
                     accordion.classList.remove('active');
                 }
-                // Hide the panel if accordion is hidden
-                if (accordion.style.display === 'none') {
-                    panel.style.display = 'none';
-                }
             }
 
-            // Show/hide no results message
             document.getElementById('no-results-message').style.display = 
                 visibleCount === 0 ? 'block' : 'none';
         }
 
-        // Add search event listener
+        // Add event listeners
         document.getElementById('assaySearch').addEventListener('input', filterAssays);
+        document.getElementById('cdcFilter').addEventListener('change', filterAssays);
 
         // Load target details when page loads
         document.addEventListener('DOMContentLoaded', loadTargetDetails);

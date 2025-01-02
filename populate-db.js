@@ -19,6 +19,7 @@ async function populateDB() {
                 forwardPrimer: 'AGTCAGTC',
                 reversePrimer: 'AGTCAGTC',
                 probe: 'AGTCAGTC',
+                cdcRecommended: true,
                 notes: `Sample primer for ${disease}`
             };
 
@@ -30,6 +31,7 @@ async function populateDB() {
                 forwardPrimer: 'TACGTACG',
                 reversePrimer: 'TACGTACG',
                 probe: 'TACGTACG',
+                cdcRecommended: false,
                 notes: `Another primer for ${disease}`
             };
 
