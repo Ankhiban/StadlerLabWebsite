@@ -59,6 +59,32 @@
     width: 18px;
     height: 18px;
 }
+
+#sortSelect {
+    padding: 12px 20px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+#sortSelect:focus {
+    border-color: #666;
+    outline: none;
+}
+
+#targetsTable {
+    margin-top: 20px;
+}
+
+#targetsTable th {
+    cursor: pointer;
+    padding: 12px 8px;
+}
+
+#targetsTable th:hover {
+    background-color: #c3e6ee;
+}
 </style>
 </head>
 <body>
@@ -82,6 +108,15 @@
         <input type="text" id="searchInput" placeholder="Search targets...">
     </div>
     <div class="filter-group">
+        <label for="sortSelect">Sort by:</label>
+        <select id="sortSelect">
+            <option value="nameAsc">Name (A-Z)</option>
+            <option value="nameDesc">Name (Z-A)</option>
+            <option value="primersAsc">Primers (Low to High)</option>
+            <option value="primersDesc">Primers (High to Low)</option>
+        </select>
+    </div>
+    <div class="filter-group">
         <label class="checkbox-label">
             <input type="checkbox" id="hideEmptyTargets">
             Hide targets without primers
@@ -94,48 +129,85 @@
 </div>
 
 <table id="targetsTable">
-    <tr>
-        <th>Target</th>
-        <th>Number of Primers</th>
-    </tr>
+    <thead>
+        <tr>
+            <th>Target</th>
+            <th>Number of Primers</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Table content will be dynamically populated -->
+    </tbody>
 </table>
 
 <script>
-function filterTable() {
+function sortTargets(rows, sortType) {
+    return Array.from(rows).sort((a, b) => {
+        const targetA = a.querySelector('a').textContent.toLowerCase();
+        const targetB = b.querySelector('a').textContent.toLowerCase();
+        const primersA = parseInt(a.querySelector('td:last-child').textContent);
+        const primersB = parseInt(b.querySelector('td:last-child').textContent);
+
+        switch(sortType) {
+            case 'nameAsc':
+                return targetA.localeCompare(targetB);
+            case 'nameDesc':
+                return targetB.localeCompare(targetA);
+            case 'primersAsc':
+                return primersA - primersB;
+            case 'primersDesc':
+                return primersB - primersA;
+            default:
+                return 0;
+        }
+    });
+}
+
+function filterAndSortTable() {
     const searchText = document.getElementById('searchInput').value.toLowerCase();
     const hideEmpty = document.getElementById('hideEmptyTargets').checked;
-    const table = document.getElementById('targetsTable');
-    const rows = Array.from(table.getElementsByTagName('tr')).slice(1); // Skip header row
+    const sortType = document.getElementById('sortSelect').value;
+    const tbody = document.getElementById('targetsTable').getElementsByTagName('tbody')[0];
+    const rows = tbody.getElementsByTagName('tr');
     let hasVisibleRows = false;
 
-    rows.forEach(row => {
-        const targetName = row.getElementsByTagName('a')[0].textContent.toLowerCase();
-        const primerCount = parseInt(row.getElementsByTagName('td')[1].textContent);
+    // First, filter the rows
+    Array.from(rows).forEach(row => {
+        const targetName = row.querySelector('a').textContent.toLowerCase();
+        const primerCount = parseInt(row.querySelector('td:last-child').textContent);
         
-        // Check if row matches both search text and primer filter
         const matchesSearch = targetName.includes(searchText);
         const matchesPrimerFilter = !hideEmpty || primerCount > 0;
 
-        const shouldShow = matchesSearch && matchesPrimerFilter;
-        row.style.display = shouldShow ? '' : 'none';
-        if (shouldShow) hasVisibleRows = true;
+        row.style.display = (matchesSearch && matchesPrimerFilter) ? '' : 'none';
+        if (matchesSearch && matchesPrimerFilter) hasVisibleRows = true;
     });
+
+    // Then, sort the visible rows
+    const sortedRows = sortTargets(Array.from(rows).filter(row => row.style.display !== 'none'), sortType);
+    
+    // Clear and repopulate the table body with sorted rows
+    while (tbody.firstChild) {
+        tbody.removeChild(tbody.firstChild);
+    }
+    sortedRows.forEach(row => tbody.appendChild(row));
 
     // Show/hide the "no results" message
     document.getElementById('no-results').style.display = hasVisibleRows ? 'none' : 'block';
 }
 
-// Add event listeners for both search and checkbox
-document.getElementById('searchInput').addEventListener('keyup', filterTable);
-document.getElementById('hideEmptyTargets').addEventListener('change', filterTable);
+// Add event listeners for all controls
+document.getElementById('searchInput').addEventListener('keyup', filterAndSortTable);
+document.getElementById('hideEmptyTargets').addEventListener('change', filterAndSortTable);
+document.getElementById('sortSelect').addEventListener('change', filterAndSortTable);
 
-// Function to load targets dynamically
+// Initial table population with sorting
 async function loadTargets() {
     try {
         const response = await fetch('/api/targets');
         const targets = await response.json();
         
-        const tableBody = document.getElementById('targetsTable');
+        const tbody = document.querySelector('#targetsTable tbody');
         
         targets.forEach(target => {
             const row = document.createElement('tr');
@@ -143,8 +215,11 @@ async function loadTargets() {
                 <td><a href="target.html?name=${encodeURIComponent(target.name)}">${target.name}</a></td>
                 <td>${target.count}</td>
             `;
-            tableBody.appendChild(row);
+            tbody.appendChild(row);
         });
+
+        // Apply initial sorting
+        filterAndSortTable();
     } catch (err) {
         console.error('Error loading targets:', err);
     }
