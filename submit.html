@@ -163,7 +163,7 @@
     <script>
         (function() {
             // Replace with your Google Apps Script URL
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7GrZwFGjVc8GgyzV87es3pzR0x8yvzPnk-GQc3Vckh7jKyfCtZnbiOKa9qkIo_1Ou7Q/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzXW3Phm2V-l8bPSI2IH29_L4zkFNB015bxzIwcXw5sw305mrXab62YrUuWSDQopsyJ3Q/exec';
 
             const form = document.getElementById('submitForm');
             const loadingDiv = document.getElementById('loading');
@@ -180,47 +180,46 @@
                 form.querySelector('button').disabled = isLoading;
             }
 
-            form.addEventListener('submit', async function(event) {
+            form.addEventListener('submit', function(event) {
                 event.preventDefault();
                 
+                const formData = {
+                    username: form.username.value,
+                    email: form.email.value,
+                    disease: form.disease.value,
+                    fprimer: form.fprimer.value,
+                    rprimer: form.rprimer.value,
+                    probe: form.probe.value
+                };
+
+                setLoading(true);
                 showAlert('success', false);
                 showAlert('error', false);
-                setLoading(true);
 
-                try {
-                    const formData = {
-                        username: form.username.value,
-                        email: form.email.value,
-                        disease: form.disease.value,
-                        fprimer: form.fprimer.value,
-                        rprimer: form.rprimer.value,
-                        probe: form.probe.value
-                    };
+                const encodedData = Object.keys(formData)
+                    .map(key => encodeURIComponent(key) + '=' + encodeURIComponent(formData[key]))
+                    .join('&');
 
-                    const response = await fetch(SCRIPT_URL, {
-                        method: 'POST',
-                        mode: 'no-cors',
-                        cache: 'no-cache',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(formData)
-                    });
-
-                    const result = await response.json();
-
-                    if (result.status === 'success') {
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', SCRIPT_URL);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                
+                xhr.onload = function() {
+                    setLoading(false);
+                    if (xhr.status === 200) {
                         showAlert('success');
                         form.reset();
                     } else {
-                        throw new Error(result.message || 'Failed to send email');
+                        showAlert('error');
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    showAlert('error');
-                } finally {
+                };
+                
+                xhr.onerror = function() {
                     setLoading(false);
-                }
+                    showAlert('error');
+                };
+
+                xhr.send(encodedData);
             });
         })();
     </script>
