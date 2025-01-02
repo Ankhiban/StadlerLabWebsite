@@ -6,7 +6,6 @@ async function populateDB() {
         await mongoose.connect('mongodb://localhost/primers_db');
         console.log('Connected to MongoDB');
 
-        // Sample diseases and their primers
         const diseases = ['Influenza', 'Measles', 'Norovirus'];
         
         for (const disease of diseases) {
@@ -18,11 +17,8 @@ async function populateDB() {
                 reference: 'Reference',
                 type: 'qPCR',
                 forwardPrimer: 'AGTCAGTC',
-                forwardPrimerLength: 8,
                 reversePrimer: 'AGTCAGTC',
-                reversePrimerLength: 8,
                 probe: 'AGTCAGTC',
-                probeLength: 8,
                 notes: `Sample primer for ${disease}`
             };
 
@@ -32,11 +28,8 @@ async function populateDB() {
                 reference: 'Reference2',
                 type: 'qPCR',
                 forwardPrimer: 'TACGTACG',
-                forwardPrimerLength: 8,
                 reversePrimer: 'TACGTACG',
-                reversePrimerLength: 8,
                 probe: 'TACGTACG',
-                probeLength: 8,
                 notes: `Another primer for ${disease}`
             };
 
