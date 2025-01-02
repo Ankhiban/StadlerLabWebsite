@@ -4,15 +4,19 @@
 <title>targets</title>
 <link rel="stylesheet" type="text/css" href="style.css">
 <style>
-.search-container {
+.search-filter-container {
     margin: 20px auto;
-    max-width: 500px;
+    max-width: 800px;
     padding: 10px;
     text-align: center;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
 }
 
 #searchInput {
-    width: 80%;
+    width: 300px;
     padding: 12px 20px;
     margin: 8px 0;
     box-sizing: border-box;
@@ -26,6 +30,22 @@
     outline: none;
 }
 
+.filter-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+    color: #444;
+    font-size: 16px;
+}
+
 .no-results {
     text-align: center;
     padding: 20px;
@@ -33,11 +53,17 @@
     font-style: italic;
     display: none;
 }
+
+.checkbox-label input[type="checkbox"] {
+    cursor: pointer;
+    width: 18px;
+    height: 18px;
+}
 </style>
 </head>
 <body>
 
-  <nav class="navbar">
+<nav class="navbar">
     <ul>
         <li><a href="index.html">Home</a></li>
         <li><a href="about.html">About</a></li>
@@ -48,11 +74,19 @@
 </nav>
 
 <div class="maintext">
-  <h1>Targets</h1>
+    <h1>Targets</h1>
 </div>
 
-<div class="search-container">
-    <input type="text" id="searchInput" placeholder="Search targets...">
+<div class="search-filter-container">
+    <div class="filter-group">
+        <input type="text" id="searchInput" placeholder="Search targets...">
+    </div>
+    <div class="filter-group">
+        <label class="checkbox-label">
+            <input type="checkbox" id="hideEmptyTargets">
+            Hide targets without primers
+        </label>
+    </div>
 </div>
 
 <div id="no-results" class="no-results">
@@ -60,44 +94,64 @@
 </div>
 
 <table id="targetsTable">
-  <tr>
-    <th><a href="influenza.html">Influenza</a></th>
-    <th>2</th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Measles</a></th>
-    <th>2</th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Norovirus</a></th>
-    <th>3</th>
-  </tr>
-  <tr>
-    <th><a href="influenza.html">Adenovirus</a></th>
-    <th>1</th>
-  </tr>
+    <tr>
+        <th>Target</th>
+        <th>Number of Primers</th>
+    </tr>
 </table>
 
 <script>
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    const searchText = this.value.toLowerCase();
+function filterTable() {
+    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const hideEmpty = document.getElementById('hideEmptyTargets').checked;
     const table = document.getElementById('targetsTable');
-    const rows = table.getElementsByTagName('tr');
+    const rows = Array.from(table.getElementsByTagName('tr')).slice(1); // Skip header row
     let hasVisibleRows = false;
 
-    for (let row of rows) {
+    rows.forEach(row => {
         const targetName = row.getElementsByTagName('a')[0].textContent.toLowerCase();
-        if (targetName.includes(searchText)) {
-            row.style.display = '';
-            hasVisibleRows = true;
-        } else {
-            row.style.display = 'none';
-        }
-    }
+        const primerCount = parseInt(row.getElementsByTagName('td')[1].textContent);
+        
+        // Check if row matches both search text and primer filter
+        const matchesSearch = targetName.includes(searchText);
+        const matchesPrimerFilter = !hideEmpty || primerCount > 0;
+
+        const shouldShow = matchesSearch && matchesPrimerFilter;
+        row.style.display = shouldShow ? '' : 'none';
+        if (shouldShow) hasVisibleRows = true;
+    });
 
     // Show/hide the "no results" message
     document.getElementById('no-results').style.display = hasVisibleRows ? 'none' : 'block';
-});
+}
+
+// Add event listeners for both search and checkbox
+document.getElementById('searchInput').addEventListener('keyup', filterTable);
+document.getElementById('hideEmptyTargets').addEventListener('change', filterTable);
+
+// Function to load targets dynamically
+async function loadTargets() {
+    try {
+        const response = await fetch('/api/targets');
+        const targets = await response.json();
+        
+        const tableBody = document.getElementById('targetsTable');
+        
+        targets.forEach(target => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td><a href="target.html?name=${encodeURIComponent(target.name)}">${target.name}</a></td>
+                <td>${target.count}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+    } catch (err) {
+        console.error('Error loading targets:', err);
+    }
+}
+
+// Load targets when the page loads
+document.addEventListener('DOMContentLoaded', loadTargets);
 </script>
 
 </body>
