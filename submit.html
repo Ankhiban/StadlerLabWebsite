@@ -205,14 +205,19 @@
                 xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
                 
                 xhr.onload = function() {
-                    setLoading(false);
-                    if (xhr.status === 200) {
-                        showAlert('success');
-                        form.reset();
-                    } else {
-                        showAlert('error');
-                    }
-                };
+    setLoading(false);
+    try {
+        if (xhr.status === 200 && xhr.responseText === "success") {
+            showAlert('success');
+            form.reset();
+        } else {
+            showAlert('error');
+        }
+    } catch (e) {
+        showAlert('error');
+        console.error('Response parsing error:', e);
+    }
+};
                 
                 xhr.onerror = function() {
                     setLoading(false);
