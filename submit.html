@@ -162,8 +162,7 @@
 
     <script>
         (function() {
-            // Update this URL with your latest Google Apps Script deployment URL
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxdx1Zev_QLXFmQKmTnfnKRgTWCikpW6Ifkxri4vPtIzOpuDIGrc-2hIgFhZ5B86WLS2g/exec';
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzefzc3JCMwusFsI9EnOZ8sv1nDyKvd2yR3TZ5acQW-s1Dy3xL4FvRCAKVywVlLsxgF0Q/exec';
 
             const form = document.getElementById('submitForm');
             const loadingDiv = document.getElementById('loading');
@@ -181,6 +180,11 @@
             function showAlert(type, show = true) {
                 const alert = type === 'success' ? successAlert : errorAlert;
                 alert.style.display = show ? 'block' : 'none';
+                
+                // Scroll to the alert
+                if (show) {
+                    alert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }
             }
 
             function setLoading(isLoading) {
@@ -195,19 +199,30 @@
                 showAlert('success', false);
                 showAlert('error', false);
 
-                // Create a hidden iframe
+                // Create form data
+                const formData = new FormData();
+                const fields = ['username', 'email', 'disease', 'fprimer', 'rprimer', 'probe'];
+                fields.forEach(field => {
+                    formData.append(field, form[field].value);
+                });
+
+                // Submit the form using a hidden iframe with a target
+                const timestamp = new Date().getTime();
+                const iframeId = `hidden-iframe-${timestamp}`;
+                
+                // Create hidden iframe
                 const iframe = document.createElement('iframe');
+                iframe.setAttribute('id', iframeId);
+                iframe.setAttribute('name', iframeId);
                 iframe.style.display = 'none';
                 document.body.appendChild(iframe);
 
-                // Create a temporary form inside the iframe
+                // Create and submit the form
                 const tempForm = document.createElement('form');
-                tempForm.method = 'POST';
-                tempForm.action = SCRIPT_URL;
-                tempForm.target = '_top';
+                tempForm.setAttribute('method', 'POST');
+                tempForm.setAttribute('action', SCRIPT_URL);
+                tempForm.setAttribute('target', iframeId);
 
-                // Add form fields
-                const fields = ['username', 'email', 'disease', 'fprimer', 'rprimer', 'probe'];
                 fields.forEach(field => {
                     const input = document.createElement('input');
                     input.type = 'hidden';
@@ -216,14 +231,20 @@
                     tempForm.appendChild(input);
                 });
 
-                // Add the form to iframe and submit
-                iframe.contentDocument.body.appendChild(tempForm);
+                document.body.appendChild(tempForm);
                 tempForm.submit();
+                document.body.removeChild(tempForm);
 
-                // Show success message after short delay
+                // Handle response
                 setTimeout(() => {
                     setLoading(false);
-                    document.body.removeChild(iframe);
+                    showAlert('success', true);
+                    form.reset();
+                    
+                    // Clean up iframe after a delay
+                    setTimeout(() => {
+                        document.body.removeChild(iframe);
+                    }, 5000);
                 }, 2000);
             });
         })();
