@@ -117,7 +117,7 @@
 <body>
     <nav class="navbar">
         <ul>
-            <li><a href="index.html">Home</a></li>
+            <li><a href="home.html">Home</a></li>
             <li><a href="about.html">About</a></li>
             <li><a href="guide.html">Guide</a></li>
             <li><a href="submit.html">Submit</a></li>
@@ -162,8 +162,9 @@
 
     <script>
         (function() {
-            // Replace this URL with your Google Apps Script Web App URL
-            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxZV6-vQeU6Rtf7Uw1FvOQ8eakercG-6GeUhzIaFTeCuy_DdE9ePt1TUwk4SzAZNOyczw/exec'
+            // Replace with your Google Apps Script URL
+            const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzX--0KZG-E1BXWFZlBjZBGACDl4gOJmBfQz5KZio_KxPPEWzmcEMW60w0uBbA8RL3aNw/exec';
+
             const form = document.getElementById('submitForm');
             const loadingDiv = document.getElementById('loading');
             const successAlert = document.getElementById('successAlert');
@@ -182,15 +183,11 @@
             form.addEventListener('submit', async function(event) {
                 event.preventDefault();
                 
-                // Hide any existing alerts
                 showAlert('success', false);
                 showAlert('error', false);
-                
-                // Show loading state
                 setLoading(true);
 
                 try {
-                    // Collect form data
                     const formData = {
                         username: form.username.value,
                         email: form.email.value,
@@ -200,13 +197,14 @@
                         probe: form.probe.value
                     };
 
-                    // Send the form data to Google Apps Script
                     const response = await fetch(SCRIPT_URL, {
                         method: 'POST',
-                        body: JSON.stringify(formData),
+                        mode: 'cors',
+                        cache: 'no-cache',
                         headers: {
-                            'Content-Type': 'application/json'
-                        }
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(formData)
                     });
 
                     const result = await response.json();
