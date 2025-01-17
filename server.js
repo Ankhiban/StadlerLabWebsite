@@ -5,7 +5,9 @@ const primerSchema = require('./models/Primer');
 
 const app = express();
 
-mongoose.connect('mongodb://localhost/primers_db');
+mongoose.connect('mongodb://localhost/primers_db')
+    .then(() => console.log('Connected to MongoDB'))
+    .catch(err => console.error('MongoDB connection error:', err));
 
 app.use(express.json());
 app.use(express.static(__dirname));
@@ -18,6 +20,7 @@ app.get('/api/targets', async (req, res) => {
             name: collection.name,
             count: await mongoose.connection.db.collection(collection.name).countDocuments()
         })));
+        console.log('Found targets:', targets);
         res.json(targets);
     } catch (err) {
         console.error('Error fetching targets:', err);
@@ -29,13 +32,32 @@ app.get('/api/targets', async (req, res) => {
 app.get('/api/targets/:name', async (req, res) => {
     try {
         const targetName = req.params.name;
-        // Check if model already exists to prevent OverwriteModelError
-        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema);
+        console.log('Requested target:', targetName);
+        
+        // Log existing models and collections
+        console.log('Available models:', Object.keys(mongoose.models));
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        const collectionExists = collections.some(col => col.name === targetName);
+        console.log('Collection exists:', collectionExists);
+        
+        if (!collectionExists) {
+            return res.status(404).json({ error: 'Target collection not found' });
+        }
+        
+        // Create or get model
+        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema, targetName);
+        
+        // Query the collection
         const primers = await TargetModel.find({});
+        console.log(`Found ${primers.length} primers for ${targetName}`);
+        
         res.json(primers);
     } catch (err) {
         console.error('Error fetching primers:', err);
-        res.status(500).json({ error: err.message });
+        res.status(500).json({ 
+            error: err.message,
+            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        });
     }
 });
 
@@ -43,7 +65,6 @@ app.get('/api/targets/:name', async (req, res) => {
 app.post('/api/targets/:name', async (req, res) => {
     try {
         const targetName = req.params.name;
-        // Check if model already exists to prevent OverwriteModelError
         const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema);
         const primer = new TargetModel(req.body);
         await primer.save();
