@@ -34,44 +34,22 @@ app.get('/api/targets/:name', async (req, res) => {
         const targetName = req.params.name;
         console.log('Requested target:', targetName);
         
-        // Log existing models and collections
-        console.log('Available models:', Object.keys(mongoose.models));
+        // Check if collection exists first
         const collections = await mongoose.connection.db.listCollections().toArray();
         const collectionExists = collections.some(col => col.name === targetName);
-        console.log('Collection exists:', collectionExists);
         
         if (!collectionExists) {
             return res.status(404).json({ error: 'Target collection not found' });
         }
         
-        // Create or get model
-        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema, targetName);
-        
-        // Query the collection
-        const primers = await TargetModel.find({});
+        // Use direct collection access instead of model to prevent automatic collection creation
+        const primers = await mongoose.connection.db.collection(targetName).find({}).toArray();
         console.log(`Found ${primers.length} primers for ${targetName}`);
         
         res.json(primers);
     } catch (err) {
         console.error('Error fetching primers:', err);
-        res.status(500).json({ 
-            error: err.message,
-            stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
-        });
-    }
-});
-
-// Add new primer to a disease/target
-app.post('/api/targets/:name', async (req, res) => {
-    try {
-        const targetName = req.params.name;
-        const TargetModel = mongoose.models[targetName] || mongoose.model(targetName, primerSchema);
-        const primer = new TargetModel(req.body);
-        await primer.save();
-        res.status(201).json(primer);
-    } catch (err) {
-        console.error('Error adding primer:', err);
-        res.status(400).json({ error: err.message });
+        res.status(500).json({ error: err.message });
     }
 });
 

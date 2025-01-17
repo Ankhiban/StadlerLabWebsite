@@ -4,7 +4,6 @@
 <title>targets</title>
 <link rel="stylesheet" type="text/css" href="style.css">
 <style>
-/* ... (keep existing styles) ... */
 .search-filter-container {
     margin: 20px auto;
     max-width: 800px;
@@ -127,8 +126,11 @@
 </table>
 
 <script>
+// Store the original table rows for filtering
+let originalRows = [];
+
 function sortTargets(rows, sortType) {
-    return rows.sort((a, b) => {
+    return [...rows].sort((a, b) => {
         const targetA = a.querySelector('a')?.textContent.toLowerCase() || '';
         const targetB = b.querySelector('a')?.textContent.toLowerCase() || '';
         const primersA = parseInt(a.querySelector('td:last-child')?.textContent || '0');
@@ -149,51 +151,38 @@ function sortTargets(rows, sortType) {
     });
 }
 
-let searchTimeout;
-
 function filterAndSortTable() {
-    console.log('Filtering with search text:', document.getElementById('searchInput').value);
-    
-    const searchText = document.getElementById('searchInput').value.toLowerCase();
+    const searchText = document.getElementById('searchInput').value.toLowerCase().trim();
     const hideEmpty = document.getElementById('hideEmptyTargets').checked;
     const sortType = document.getElementById('sortSelect').value;
     const tbody = document.getElementById('targetsTable').getElementsByTagName('tbody')[0];
-    const rows = Array.from(tbody.getElementsByTagName('tr'));
-    let hasVisibleRows = false;
-
-    if (searchTimeout) {
-        clearTimeout(searchTimeout);
-    }
-
-    searchTimeout = setTimeout(() => {
-        rows.forEach(row => {
-            const targetCell = row.querySelector('a');
-            if (!targetCell) return;
-            
-            const targetName = targetCell.textContent.toLowerCase();
-            const primerCount = parseInt(row.querySelector('td:last-child')?.textContent || '0');
-            
-            console.log('Checking row:', targetName, 'against search:', searchText);
-            
-            const matchesSearch = targetName.includes(searchText);
-            const matchesPrimerFilter = !hideEmpty || primerCount > 0;
-
-            row.style.display = (matchesSearch && matchesPrimerFilter) ? '' : 'none';
-            if (matchesSearch && matchesPrimerFilter) {
-                hasVisibleRows = true;
-            }
-        });
-
-        document.getElementById('no-results').style.display = hasVisibleRows ? 'none' : 'block';
-
-        // Sort visible rows
-        const visibleRows = rows.filter(row => row.style.display !== 'none');
-        const sortedRows = sortTargets(visibleRows, sortType);
+    
+    // Filter rows
+    let visibleRows = originalRows.filter(row => {
+        const targetCell = row.querySelector('a');
+        if (!targetCell) return false;
         
-        // Clear and repopulate tbody
-        tbody.innerHTML = '';
-        sortedRows.forEach(row => tbody.appendChild(row));
-    }, 100);
+        const targetName = targetCell.textContent.toLowerCase();
+        const primerCount = parseInt(row.querySelector('td:last-child')?.textContent || '0');
+        
+        const matchesSearch = targetName.includes(searchText);
+        const matchesPrimerFilter = !hideEmpty || primerCount > 0;
+        
+        return matchesSearch && matchesPrimerFilter;
+    });
+
+    // Sort filtered rows
+    visibleRows = sortTargets(visibleRows, sortType);
+    
+    // Update table
+    tbody.innerHTML = '';
+    visibleRows.forEach(row => {
+        tbody.appendChild(row.cloneNode(true));
+    });
+
+    // Show/hide no results message
+    document.getElementById('no-results').style.display = 
+        visibleRows.length === 0 ? 'block' : 'none';
 }
 
 async function loadTargets() {
@@ -202,6 +191,7 @@ async function loadTargets() {
         const targets = await response.json();
         
         const tbody = document.querySelector('#targetsTable tbody');
+        tbody.innerHTML = '';
         
         targets.forEach(target => {
             const row = document.createElement('tr');
@@ -212,9 +202,14 @@ async function loadTargets() {
             tbody.appendChild(row);
         });
 
+        // Store original rows after initial load
+        originalRows = Array.from(tbody.getElementsByTagName('tr')).map(row => row.cloneNode(true));
+        
         filterAndSortTable();
     } catch (err) {
         console.error('Error loading targets:', err);
+        document.getElementById('no-results').textContent = 'Error loading targets';
+        document.getElementById('no-results').style.display = 'block';
     }
 }
 
@@ -222,25 +217,16 @@ async function loadTargets() {
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('searchInput');
     
-    // Remove all previous event listeners
-    const newSearchInput = searchInput.cloneNode(true);
-    searchInput.parentNode.replaceChild(newSearchInput, searchInput);
-    
-    // Add input event listener
-    newSearchInput.addEventListener('input', (e) => {
-        console.log('Input event triggered:', e.target.value);
+    // Add event listeners
+    searchInput.addEventListener('input', () => {
         filterAndSortTable();
     });
 
-    // Load initial data
-    loadTargets().then(() => {
-        console.log('Initial data loaded');
-        filterAndSortTable();
-    });
-
-    // Add other event listeners
     document.getElementById('hideEmptyTargets').addEventListener('change', filterAndSortTable);
     document.getElementById('sortSelect').addEventListener('change', filterAndSortTable);
+
+    // Load initial data
+    loadTargets();
 });
 </script>
 
